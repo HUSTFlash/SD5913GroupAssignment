@@ -9,6 +9,8 @@ enemy_size_min = 1
 enemy_size_max = 5
 screen_width = 1280
 screen_height = 720
+YELLOW_BALL_GENERATION_EVENT = pygame.USEREVENT + 1
+YELLOW_BALL_GENERATION_INTERVAL = 1000  # 1000 milliseconds = 1 second
 
 # Initialize pygame
 pygame.init()
@@ -16,6 +18,9 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Eat Ball Game")
 clock = pygame.time.Clock()
 font = pygame.font.Font(None, 80)
+
+# Start yellow ball generation event
+pygame.time.set_timer(YELLOW_BALL_GENERATION_EVENT, YELLOW_BALL_GENERATION_INTERVAL)
 
 # Class definitions
 class Ball:
@@ -27,34 +32,35 @@ class Ball:
 
     def eat(self, target_ball):
         if self != target_ball and self.status and target_ball.status:
-            if math.sqrt((self.x - target_ball.x)**2 + (self.y - target_ball.y)**2) <= self.size:
+            distance = math.sqrt((self.x - target_ball.x)**2 + (self.y - target_ball.y)**2)
+            if distance <= self.size:
                 target_ball.status = False
                 self.size += target_ball.size
-        
+
     def get_speed(self):
         base_speed = 2  # Base speed factor
-        return base_speed / (self.size / 10 + 1)  # Speed decreases as size increases
-        
+        return base_speed / (self.size / 25 + 1)  # Speed decreases as size increases
+
 class PlayerBall(Ball):
     def __init__(self, x, y, size):
         super().__init__(x, y, size)
 
     def draw(self, screen):
-        pygame.draw.circle(screen, "white", (self.x, self.y), self.size)
+        pygame.draw.circle(screen, "white", (int(self.x), int(self.y)), self.size)
 
 class EnemyBall(Ball):
     def __init__(self, x, y, size):
         super().__init__(x, y, size)
 
     def draw(self, screen):
-        pygame.draw.circle(screen, "yellow", (self.x, self.y), self.size)
+        pygame.draw.circle(screen, "yellow", (int(self.x), int(self.y)), self.size)
 
 class AIBall(Ball):
     def __init__(self, x, y, size):
         super().__init__(x, y, size)
 
     def draw(self, screen):
-        pygame.draw.circle(screen, "blue", (self.x, self.y), self.size)
+        pygame.draw.circle(screen, "blue", (int(self.x), int(self.y)), self.size)
 
     def find_nearest_ball(self, balls, player_ball):
         nearest_ball = None
@@ -112,8 +118,8 @@ def create_player_ball():
     player_ball = PlayerBall(initial_position_x, initial_position_y, player_initial_size)
     return player_ball
 
-def create_enemy_ball(balls):
-    if len(balls) < enemy_num:
+def create_enemy_ball(balls, num=1):
+    for _ in range(num):
         enemy_position_x = random.randint(0, screen_width)
         enemy_position_y = random.randint(0, screen_height)
         enemy_size = random.randint(enemy_size_min, enemy_size_max)  # Separate enemy size
@@ -145,7 +151,7 @@ def player_move(player_ball):
 def player_eat(player_ball, balls):
     for ball in balls:
         player_ball.eat(ball)
-        
+
 def draw_screen(player_ball, balls, screen):
     screen.fill("black")
     if player_ball.status:
@@ -154,22 +160,28 @@ def draw_screen(player_ball, balls, screen):
         if ball.status:
             ball.draw(screen)
 
-def check_game_end(player_ball, balls):
+def check_game_end(player_ball, enemy_balls, ai_balls):
     if not player_ball.status:
         return "lose"  # Player lost
-    for ball in balls:
-        if ball.status:
-            return None  # Game is not over yet
-    return "win"  # Player won
+
+    # Check if all AI balls have been eaten
+    if all(not ai_ball.status for ai_ball in ai_balls):
+        return "win"  # Player won
+
+    return None  # Game is not over yet
 
 def main():
     enemy_balls = []
-    ai_balls = create_ai_balls(8)  # Adding three AI balls
+    ai_balls = create_ai_balls(8)  # Adding AI balls
+    try:
+        replay_img = pygame.image.load("Replay_Button.png").convert_alpha()
+        exit_img = pygame.image.load("Exit_Button.png").convert_alpha()
+    except pygame.error as e:
+        print(f"Error loading images: {e}")
+        pygame.quit()
+        sys.exit()
 
-    replay_img = pygame.image.load("Replay_Button.png")
-    exit_img = pygame.image.load("Exit_Button.png")
     player_ball = create_player_ball()
-
     game_end = None
 
     while True:
@@ -177,9 +189,15 @@ def main():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            elif event.type == YELLOW_BALL_GENERATION_EVENT:
+                # Generate 2 to 5 yellow balls every second
+                num_new_balls = random.randint(2, 5)
+                create_enemy_ball(enemy_balls, num_new_balls)
+                # Optional: Limit total number of enemy balls to prevent overflow
+                if len(enemy_balls) > enemy_num:
+                    enemy_balls = enemy_balls[-enemy_num:]
         
         if not game_end:
-            create_enemy_ball(enemy_balls)
             draw_screen(player_ball, enemy_balls + ai_balls, screen)
             player_move(player_ball)
             player_eat(player_ball, enemy_balls + ai_balls)
@@ -192,7 +210,7 @@ def main():
                 for other_ai_ball in ai_balls:
                     ai_ball.eat(other_ai_ball)
             
-            game_end = check_game_end(player_ball, enemy_balls)
+            game_end = game_end = check_game_end(player_ball, enemy_balls, ai_balls)
         
         if game_end:
             end_text = 'Congratulations! You have eaten all balls!' if game_end == "win" else 'You lose. Try again!'
@@ -201,15 +219,21 @@ def main():
             screen.blit(gameover_text, text_rect)
             screen.blit(replay_img, (440, 310))
             screen.blit(exit_img, (440, 460))
-            mouse_down = pygame.mouse.get_pressed()
-            if mouse_down[0]:
-                pos = pygame.mouse.get_pos()
-                if 440 < pos[0] < 918 and 310 < pos[1] < 410:
-                    main()
-                elif 440 < pos[0] < 918 and 460 < pos[1] < 560:
-                    pygame.quit()
-                    sys.exit()
-
+            pygame.display.flip()
+            # Pause the game loop until the user clicks replay or exit
+            while game_end:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
+                    elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        pos = pygame.mouse.get_pos()
+                        if 440 < pos[0] < 918 and 310 < pos[1] < 410:
+                            main()  # Restart the game
+                        elif 440 < pos[0] < 918 and 460 < pos[1] < 560:
+                            pygame.quit()
+                            sys.exit()
+        
         pygame.display.flip()
         clock.tick(60)
 
