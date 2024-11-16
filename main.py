@@ -11,13 +11,13 @@ enemy_size_min = 5
 enemy_size_max = 10
 screen_width = 1280
 screen_height = 720
+skill_ball_size = 10
 
 pygame.init()
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Eat Ball Game")
 clock = pygame.time.Clock()
-dt = clock.tick(60) / 1000
-max_speed = 30 * dt
+max_speed = 0.1
 font = pygame.font.Font(None, 96)
 
 class Ball(object):
@@ -26,6 +26,7 @@ class Ball(object):
         self.y = y
         self.size = size
         self.status = True
+        self.skill_id = 0
 
     def eat(self, target_ball):
         if self != target_ball and self.status and target_ball.status:
@@ -60,7 +61,7 @@ class AIBall(Ball):
             if ai_ball == self:
                 continue
             else:
-                if self.size > ai_ball.size:
+                if self.size > ai_ball.size and ai_ball.status:
                     distance_other = math.sqrt((self.x - ai_ball.x)**2 + (self.y - ai_ball.y)**2)
                     if distance_other < distance_otherball:
                         nearest_otherball = ai_ball
@@ -69,7 +70,7 @@ class AIBall(Ball):
         nearest_enemyball = None
         for ball in balls:
             distance_ball = math.sqrt((self.x - ball.x)**2 + (self.y - ball.y)**2)
-            if distance_ball < distance_enemyball:
+            if distance_ball < distance_enemyball and ball.status:
                 nearest_enemyball = ball
                 distance_enemyball = distance_ball
         
@@ -114,6 +115,22 @@ class EnemyBall(Ball):
 
     def draw(self, screen):
         pygame.draw.circle(screen, "yellow", (self.x, self.y), self.size)
+
+class SkillBall(Ball):
+    def __init__(self, x, y, size):
+        super().__init__(x, y, size)
+
+    def draw(self, screen):
+        skill = random.randint(1, 4)
+        match skill:
+            case 1:
+                pygame.draw.circle(screen, "red", (self.x, self.y), self.size)
+            case 2:
+                pygame.draw.circle(screen, "green", (self.x, self.y), self.size)
+            case 3:
+                pygame.draw.circle(screen, "orange", (self.x, self.y), self.size)
+            case 4:
+                pygame.draw.circle(screen, "purple", (self.x, self.y), self.size)
 
 def create_player_ball():
     initial_position_x = screen_width / 2
