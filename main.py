@@ -272,7 +272,7 @@ def main():
             for ai_ball in ai_balls:
                 ai_ball.ai_movement(player_ball, ai_balls, enemy_balls)
                 ai_ball_eat(ai_ball, player_ball, ai_balls, enemy_balls)
-            game_end = check_game_end(player_ball, ai_balls)
+            game_end, game_endding = check_game_end(player_ball, ai_balls)
 
         if game_end:
             gameover_text = font.render('Congratulations! You have eat all balls!', True, "red")
