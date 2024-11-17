@@ -11,7 +11,9 @@ enemy_size_min = 5
 enemy_size_max = 10
 screen_width = 1280
 screen_height = 720
+skill_ball_num = 3
 skill_ball_size = 10
+skill_refresh_min = 2
 
 pygame.init()
 screen = pygame.display.set_mode((screen_width, screen_height))
@@ -20,6 +22,9 @@ clock = pygame.time.Clock()
 max_speed = 0.1
 font = pygame.font.Font(None, 96)
 
+ADD_SKILLBALL_EVENT = pygame.USEREVENT + 1
+pygame.time.set_timer(ADD_SKILLBALL_EVENT, skill_refresh_min * 60 * 1000)
+
 class Ball(object):
     def __init__(self, x, y, size):
         self.x = x
@@ -27,12 +32,19 @@ class Ball(object):
         self.size = size
         self.status = True
         self.skill_id = 0
+        self.score = 0
 
     def eat(self, target_ball):
         if self != target_ball and self.status and target_ball.status:
             if math.sqrt((self.x - target_ball.x)**2 + (self.y - target_ball.y)**2) <= self.size:
                 target_ball.status = False
                 self.size += target_ball.size
+    
+    def get_skill(self, target_skill):
+        if self.status and target_skill.status:
+            if math.sqrt((self.x - target_skill.x)**2 + (self.y - target_skill.y)**2) <= self.size:
+                target_skill.status = False
+                self.skill_id = target_skill.skill_id
     
     def get_speed(self):
         return max_speed / (self.size / 12)
@@ -119,18 +131,23 @@ class EnemyBall(Ball):
 class SkillBall(Ball):
     def __init__(self, x, y, size):
         super().__init__(x, y, size)
+        skill = random.randint(1, 3)
+        match skill:
+            case 1: # 1 represents speedup
+                self.skill_id = 1
+            case 2: # 2 represents flash
+                self.skill_id = 2
+            case 3: # 3 represents invincible
+                self.skill_id = 3
 
     def draw(self, screen):
-        skill = random.randint(1, 4)
-        match skill:
+        match self.skill_id:
             case 1:
                 pygame.draw.circle(screen, "red", (self.x, self.y), self.size)
             case 2:
                 pygame.draw.circle(screen, "green", (self.x, self.y), self.size)
             case 3:
                 pygame.draw.circle(screen, "orange", (self.x, self.y), self.size)
-            case 4:
-                pygame.draw.circle(screen, "purple", (self.x, self.y), self.size)
 
 def create_player_ball():
     initial_position_x = screen_width / 2
@@ -154,6 +171,13 @@ def create_enemy_ball(balls):
         enemy_size = random.randint(enemy_size_min, enemy_size_max)
         enemy_ball = EnemyBall(enemy_position_x, enemy_position_y, enemy_size)
         balls.append(enemy_ball)
+     
+def create_skill_ball(skill_balls):
+    if len(skill_balls) < skill_ball_num:
+        skill_position_x = random.randint(0, screen_width)
+        skill_position_y = random.randint(0, screen_height)
+        skill_ball = SkillBall(skill_position_x, skill_position_y, skill_ball_size)
+        skill_balls.append(skill_ball)
         
 def player_move(player_ball, speed):
     key = pygame.key.get_pressed()
@@ -188,7 +212,7 @@ def ai_ball_eat(ai_ball, player_ball, ai_balls, balls):
     for ball in balls:
         ai_ball.eat(ball)
         
-def draw_screen(player_ball, ai_balls, balls, screen):
+def draw_screen(player_ball, ai_balls, balls, skill_balls, screen):
     screen.fill("black")
     if player_ball.status:
         player_ball.draw(screen)
@@ -198,17 +222,32 @@ def draw_screen(player_ball, ai_balls, balls, screen):
     for ball in balls:
         if ball.status:
             ball.draw(screen)
+    for skill_ball in skill_balls:
+        if skill_ball.status:
+            skill_ball.draw(screen)
 
-def check_game_end(balls):
+def check_game_end(player_ball, ai_balls):
     gameover = True
-    for ball in balls:
-        if ball.status == True:
-            gameover = False
-    return gameover      
+    gameending = True
+    player_gameover = False
+    ai_gameover = True
+    
+    if player_ball.status == False:
+        player_gameover = True
+        gameending = False
+        
+    for ai_ball in ai_balls:
+        if ai_ball.status:
+            ai_gameover = False
+    
+    gameover = player_gameover or ai_gameover
+    
+    return gameover, gameending
 
 def main():
     ai_balls = []
     enemy_balls = []
+    skill_balls = []
 
     replay_img = pygame.image.load("Replay_Button.png")
     exit_img = pygame.image.load("Exit_Button.png")
@@ -221,19 +260,21 @@ def main():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            if event.type == ADD_SKILLBALL_EVENT:
+                create_skill_ball(skill_balls)
 
         if game_end == False:
             creat_ai_balls(ai_balls)
             create_enemy_ball(enemy_balls)
-            draw_screen(player_ball, ai_balls, enemy_balls, screen)
+            draw_screen(player_ball, ai_balls, enemy_balls, skill_balls, screen)
             player_move(player_ball, player_ball.get_speed())
             player_eat(player_ball, ai_balls, enemy_balls)
             for ai_ball in ai_balls:
                 ai_ball.ai_movement(player_ball, ai_balls, enemy_balls)
                 ai_ball_eat(ai_ball, player_ball, ai_balls, enemy_balls)
-            game_end = check_game_end(enemy_balls)
+            game_end = check_game_end(player_ball, ai_balls)
 
-        if game_end:    
+        if game_end:
             gameover_text = font.render('Congratulations! You have eat all balls!', True, "red")
             screen.blit(gameover_text, (0, 160))
             screen.blit(replay_img, (440, 310))
