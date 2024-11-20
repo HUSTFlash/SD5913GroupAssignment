@@ -9,11 +9,15 @@ ai_num = 4
 enemy_num = 20
 enemy_size_min = 5
 enemy_size_max = 10
+enemy_refresh_min = 2
 screen_width = 1280
 screen_height = 720
 skill_ball_num = 3
 skill_ball_size = 10
 skill_refresh_min = 2
+
+speedup_mag = 1.5
+flash_distance = 10
 
 pygame.init()
 screen = pygame.display.set_mode((screen_width, screen_height))
@@ -25,6 +29,9 @@ font = pygame.font.Font(None, 96)
 ADD_SKILLBALL_EVENT = pygame.USEREVENT + 1
 pygame.time.set_timer(ADD_SKILLBALL_EVENT, skill_refresh_min * 60 * 1000)
 
+REFRESH_BALL_EVENT = pygame.USEREVENT + 2
+pygame.time.set_timer(REFRESH_BALL_EVENT, enemy_refresh_min * 60 * 1000)
+
 class Ball(object):
     def __init__(self, x, y, size):
         self.x = x
@@ -33,21 +40,30 @@ class Ball(object):
         self.status = True
         self.skill_id = 0
         self.score = 0
+        self.speedup = False
+        self.invincible = False
 
     def eat(self, target_ball):
-        if self != target_ball and self.status and target_ball.status:
+        if self != target_ball and self.status and target_ball.status and target_ball.invincible == False:
             if math.sqrt((self.x - target_ball.x)**2 + (self.y - target_ball.y)**2) <= self.size:
                 target_ball.status = False
                 self.size += target_ball.size
     
     def get_skill(self, target_skill):
-        if self.status and target_skill.status:
+        if self.status and target_skill.status and self.skill_id != 0:
             if math.sqrt((self.x - target_skill.x)**2 + (self.y - target_skill.y)**2) <= self.size:
                 target_skill.status = False
                 self.skill_id = target_skill.skill_id
     
+    def use_skill(self):
+        return 0
+    
     def get_speed(self):
-        return max_speed / (self.size / 12)
+        if self.speedup:
+            return max_speed * speedup_mag / (self.size / 12)
+        else:
+            return max_speed / (self.size / 12)
+    
         
 class PlayerBall(Ball):
     def __init__(self, x, y, size):
@@ -157,7 +173,7 @@ def create_player_ball():
     return player_ball
 
 def creat_ai_balls(ai_balls):
-    if len(ai_balls) < ai_num:
+    while len(ai_balls) < ai_num:
         ai_position_x = random.randint(0, screen_width)
         ai_position_y = random.randint(0, screen_height)
         ai_size = 12
@@ -165,15 +181,25 @@ def creat_ai_balls(ai_balls):
         ai_balls.append(ai_ball)
 
 def create_enemy_ball(balls):
-    if len(balls) < enemy_num:
+    while len(balls) < enemy_num:
         enemy_position_x = random.randint(0, screen_width)
         enemy_position_y = random.randint(0, screen_height)
         enemy_size = random.randint(enemy_size_min, enemy_size_max)
         enemy_ball = EnemyBall(enemy_position_x, enemy_position_y, enemy_size)
         balls.append(enemy_ball)
+
+def refresh_enemy_ball(balls):
+    if len(balls) != 0:
+        for ball in balls:
+            if ball.status == False:
+                balls.remove(ball)
      
 def create_skill_ball(skill_balls):
-    if len(skill_balls) < skill_ball_num:
+    if len(skill_balls) != 0:
+        for skill_ball in skill_balls:
+            if skill_ball.status == False:
+                skill_balls.remove(skill_ball)
+    while len(skill_balls) < skill_ball_num:
         skill_position_x = random.randint(0, screen_width)
         skill_position_y = random.randint(0, screen_height)
         skill_ball = SkillBall(skill_position_x, skill_position_y, skill_ball_size)
@@ -262,6 +288,8 @@ def main():
                 sys.exit()
             if event.type == ADD_SKILLBALL_EVENT:
                 create_skill_ball(skill_balls)
+            if event.type == REFRESH_BALL_EVENT:
+                refresh_enemy_ball(enemy_balls)
 
         if game_end == False:
             creat_ai_balls(ai_balls)
