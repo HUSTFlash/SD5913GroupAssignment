@@ -5,7 +5,7 @@ import sys
 
 import pygame.image
 
-ai_num = 4
+ai_num = 3
 enemy_num = 20
 enemy_size_min = 5
 enemy_size_max = 10
@@ -303,10 +303,16 @@ def main():
             game_end, game_endding = check_game_end(player_ball, ai_balls)
 
         if game_end:
-            gameover_text = font.render('Congratulations! You have eat all balls!', True, "red")
-            screen.blit(gameover_text, (0, 160))
-            screen.blit(replay_img, (440, 310))
-            screen.blit(exit_img, (440, 460))
+            if game_endding:
+                gameover_text = font.render('Congratulations! You have eat all balls!', True, "red")
+                screen.blit(gameover_text, (0, 160))
+                screen.blit(replay_img, (440, 310))
+                screen.blit(exit_img, (440, 460))
+            else:
+                gameover_text = font.render('Sorry! You were eaten by other ball!', True, "blue")
+                screen.blit(gameover_text, (0, 160))
+                screen.blit(replay_img, (440, 310))
+                screen.blit(exit_img, (440, 460))    
             mouse_down = pygame.mouse.get_pressed()
             if mouse_down[0]:
                 pos = pygame.mouse.get_pos()
