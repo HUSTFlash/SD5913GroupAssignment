@@ -18,6 +18,8 @@ skill_refresh_min = 2
 
 speedup_mag = 1.5
 flash_distance = 10
+speedup_duration = 10000
+invincible_duration = 10000
 
 pygame.init()
 screen = pygame.display.set_mode((screen_width, screen_height))
@@ -42,6 +44,7 @@ class Ball(object):
         self.score = 0
         self.speedup = False
         self.invincible = False
+        self.skill_start_time = None
 
     def eat(self, target_ball):
         if self != target_ball and self.status and target_ball.status and target_ball.invincible == False:
@@ -56,7 +59,26 @@ class Ball(object):
                 self.skill_id = target_skill.skill_id
     
     def use_skill(self):
-        return 0
+        match self.skill_id:
+            case 1:
+                self.skill_id = 0
+                self.speedup = True
+                self.skill_start_time = pygame.time.get_ticks()
+            case 2:
+                self.skill_id = 0
+            case 3:
+                self.skill_id = 0
+                self.invincible = True
+                self.skill_start_time = pygame.time.get_ticks()
+                
+    def end_skill(self):
+        current_time = pygame.time.get_ticks()
+        if self.speedup:
+            if current_time - self.skill_start_time > speedup_duration:
+                self.speedup = False
+        else:
+            if current_time - self.skill_start_time > invincible_duration:
+                self.invincible = False
     
     def get_speed(self):
         if self.speedup:
@@ -238,6 +260,12 @@ def ai_ball_eat(ai_ball, player_ball, ai_balls, balls):
     for ball in balls:
         ai_ball.eat(ball)
         
+def player_use_skill(player_ball):
+    key = pygame.key.get_pressed()
+    if key[pygame.K_LSHIFT]:
+        if player_ball.skill_id != 0 and player_ball.speedup == False and player_ball.invincible == False:
+            player_ball.use_skill()
+        
 def draw_screen(player_ball, ai_balls, balls, skill_balls, screen):
     screen.fill("black")
     if player_ball.status:
@@ -312,7 +340,7 @@ def main():
                 gameover_text = font.render('Sorry! You were eaten by other ball!', True, "blue")
                 screen.blit(gameover_text, (0, 160))
                 screen.blit(replay_img, (440, 310))
-                screen.blit(exit_img, (440, 460))    
+                screen.blit(exit_img, (440, 460))
             mouse_down = pygame.mouse.get_pressed()
             if mouse_down[0]:
                 pos = pygame.mouse.get_pos()
