@@ -9,12 +9,12 @@ ai_num = 3
 enemy_num = 20
 enemy_size_min = 5
 enemy_size_max = 10
-enemy_refresh_min = 2
+enemy_refresh_min = 1
 screen_width = 1280
 screen_height = 720
 skill_ball_num = 3
 skill_ball_size = 10
-skill_refresh_min = 2
+skill_refresh_min = 1
 
 speedup_mag = 1.5
 flash_distance = 10
@@ -53,7 +53,7 @@ class Ball(object):
                 self.size += target_ball.size
     
     def get_skill(self, target_skill):
-        if self.status and target_skill.status and self.skill_id != 0:
+        if self.status and target_skill.status and self.skill_id == 0:
             if math.sqrt((self.x - target_skill.x)**2 + (self.y - target_skill.y)**2) <= self.size:
                 target_skill.status = False
                 self.skill_id = target_skill.skill_id
@@ -246,23 +246,27 @@ def player_move(player_ball, speed):
             player_ball.x = screen_width
         player_ball.x += speed
         
-def player_eat(player_ball, ai_balls, balls):
+def player_eat(player_ball, ai_balls, balls, skill_balls):
     for ai_ball in ai_balls:
         player_ball.eat(ai_ball)
     for ball in balls:
         player_ball.eat(ball)
+    for skill_ball in skill_balls:
+        player_ball.get_skill(skill_ball)
 
-def ai_ball_eat(ai_ball, player_ball, ai_balls, balls):
+def ai_ball_eat(ai_ball, player_ball, ai_balls, balls, skill_balls):
     ai_ball.eat(player_ball)
     for other_ball in ai_balls:
         if other_ball != ai_ball:
             ai_ball.eat(other_ball)
     for ball in balls:
         ai_ball.eat(ball)
+    for skill_ball in skill_balls:
+        ai_ball.get_skill(skill_ball)
         
 def player_use_skill(player_ball):
     key = pygame.key.get_pressed()
-    if key[pygame.K_LSHIFT]:
+    if key[pygame.K_SPACE]:
         if player_ball.skill_id != 0 and player_ball.speedup == False and player_ball.invincible == False:
             player_ball.use_skill()
         
@@ -324,10 +328,15 @@ def main():
             create_enemy_ball(enemy_balls)
             draw_screen(player_ball, ai_balls, enemy_balls, skill_balls, screen)
             player_move(player_ball, player_ball.get_speed())
-            player_eat(player_ball, ai_balls, enemy_balls)
+            player_eat(player_ball, ai_balls, enemy_balls, skill_balls)
+            player_use_skill(player_ball)
+            if player_ball.speedup or player_ball.invincible:
+                player_ball.end_skill()
             for ai_ball in ai_balls:
                 ai_ball.ai_movement(player_ball, ai_balls, enemy_balls)
-                ai_ball_eat(ai_ball, player_ball, ai_balls, enemy_balls)
+                ai_ball_eat(ai_ball, player_ball, ai_balls, enemy_balls, skill_balls)
+                if ai_ball.speedup or ai_ball.invincible:
+                    ai_ball.end_skill()
             game_end, game_endding = check_game_end(player_ball, ai_balls)
 
         if game_end:
