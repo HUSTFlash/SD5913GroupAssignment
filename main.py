@@ -21,11 +21,20 @@ flash_distance = 10
 speedup_duration = 10000
 invincible_duration = 10000
 
+playing_bg = pygame.image.load("D:/GitHub/SD5913GroupAssignment/Art/UI/Background.png")
+#start_img = pygame.image.load("D:/GitHub/SD5913GroupAssignment/Art/UI/Start.png")
+#success_img = pygame.image.load("D:/GitHub/SD5913GroupAssignment/Art/UI/Win.png")
+#failure_img = pygame.image.load("D:/GitHub/SD5913GroupAssignment/Art/UI/Fail.png")
+
+#start_button_rect = pygame.Rect(490, 420, 300, 88)
+#replay_button_rect = pygame.Rect(450, 400, 330, 75)  
+#exit_button_rect = pygame.Rect(500, 490, 280, 75)
+
 pygame.init()
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Eat Ball Game")
 clock = pygame.time.Clock()
-max_speed = 0.1
+max_speed = 0.5
 font = pygame.font.Font(None, 96)
 
 ADD_SKILLBALL_EVENT = pygame.USEREVENT + 1
@@ -274,9 +283,9 @@ def player_use_skill(player_ball):
     if key[pygame.K_SPACE]:
         if player_ball.skill_id != 0 and player_ball.speedup == False and player_ball.invincible == False:
             player_ball.use_skill()
-        
-def draw_screen(player_ball, ai_balls, balls, skill_balls, screen):
-    screen.fill("black")
+
+def draw_screen(player_ball, ai_balls, balls, skill_balls, screen, background_img):
+    screen.blit(background_img, (0, 0))
     if player_ball.status:
         player_ball.draw(screen)
     for ai_ball in ai_balls:
@@ -313,8 +322,9 @@ def main():
     enemy_balls = []
     skill_balls = []
 
-    replay_img = pygame.image.load("Replay_Button.png")
-    exit_img = pygame.image.load("Exit_Button.png")
+
+    success_img = pygame.image.load("D:/GitHub/SD5913GroupAssignment/Art/UI/Win.png")
+    failure_img = pygame.image.load("D:/GitHub/SD5913GroupAssignment/Art/UI/Fail.png")
     game_end = False
     
     player_ball = create_player_ball()
@@ -336,8 +346,10 @@ def main():
             screen.blit(start_img, (0, 0))  
             pygame.display.flip()  # Update the display to show the start page
 
-    # Show the start page before starting the game
     start_page()
+
+    replay_button_rect = pygame.Rect(450, 400, 330, 75)  
+    exit_button_rect = pygame.Rect(500, 490, 280, 75)
 
     while True:
         for event in pygame.event.get():
@@ -352,7 +364,7 @@ def main():
         if game_end == False:
             creat_ai_balls(ai_balls)
             create_enemy_ball(enemy_balls)
-            draw_screen(player_ball, ai_balls, enemy_balls, skill_balls, screen)
+            draw_screen(player_ball, ai_balls, enemy_balls, skill_balls, screen, playing_bg)
             player_move(player_ball, player_ball.get_speed())
             player_eat(player_ball, ai_balls, enemy_balls, skill_balls)
             player_use_skill(player_ball)
@@ -367,21 +379,21 @@ def main():
 
         if game_end:
             if game_endding:
-                gameover_text = font.render('Congratulations! You have eat all balls!', True, "red")
-                screen.blit(gameover_text, (0, 160))
-                screen.blit(replay_img, (440, 310))
-                screen.blit(exit_img, (440, 460))
+                screen.blit(success_img, (0, 0))
+
             else:
-                gameover_text = font.render('Sorry! You were eaten by other ball!', True, "blue")
-                screen.blit(gameover_text, (0, 160))
-                screen.blit(replay_img, (440, 310))
-                screen.blit(exit_img, (440, 460))
+                screen.blit(failure_img,(0, 0))
+             # Draw Testing
+            #pygame.draw.rect(screen, "green", replay_button_rect)  
+            #pygame.draw.rect(screen, "green", exit_button_rect)                 
+
+
             mouse_down = pygame.mouse.get_pressed()
             if mouse_down[0]:
-                pos = pygame.mouse.get_pos()
-                if 440 < pos[0] < 918 and 310 < pos[1] < 410:
-                    main()
-                elif 440 < pos[0] < 918 and 460 < pos[1] < 560:
+                mouse_pos = pygame.mouse.get_pos()
+                if replay_button_rect.collidepoint(mouse_pos):
+                    main()  
+                elif exit_button_rect.collidepoint(mouse_pos):
                     pygame.quit()
                     sys.exit()
 
