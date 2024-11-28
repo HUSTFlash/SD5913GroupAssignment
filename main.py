@@ -34,6 +34,8 @@ pygame.time.set_timer(ADD_SKILLBALL_EVENT, skill_refresh_min * 60 * 1000)
 REFRESH_BALL_EVENT = pygame.USEREVENT + 2
 pygame.time.set_timer(REFRESH_BALL_EVENT, enemy_refresh_min * 60 * 1000)
 
+
+
 class Ball(object):
     def __init__(self, x, y, size):
         self.x = x
@@ -72,6 +74,9 @@ class Ball(object):
                 self.skill_start_time = pygame.time.get_ticks()
                 
     def end_skill(self):
+        if self.skill_start_time is None:
+            return  # If no skill has been activated, skip the skill end check
+    
         current_time = pygame.time.get_ticks()
         if self.speedup:
             if current_time - self.skill_start_time > speedup_duration:
@@ -302,6 +307,7 @@ def check_game_end(player_ball, ai_balls):
     
     return gameover, gameending
 
+
 def main():
     ai_balls = []
     enemy_balls = []
@@ -312,6 +318,26 @@ def main():
     game_end = False
     
     player_ball = create_player_ball()
+
+    def start_page():
+        start_img = pygame.image.load("D:/GitHub/SD5913GroupAssignment/Art/UI/Start.png")  # Load your start page image
+        start_button_rect = pygame.Rect(490, 420, 300, 88)  # Define the area for the start button
+        
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    mouse_pos = pygame.mouse.get_pos()
+                    if start_button_rect.collidepoint(mouse_pos):  # Check if start button is clicked
+                        return  # Exit the start page and begin the game
+            # Display the start page image
+            screen.blit(start_img, (0, 0))  
+            pygame.display.flip()  # Update the display to show the start page
+
+    # Show the start page before starting the game
+    start_page()
 
     while True:
         for event in pygame.event.get():
