@@ -301,79 +301,17 @@ def check_game_end(player_ball, ai_balls):
     gameover = player_gameover or ai_gameover
     
     return gameover, gameending
-#UI StartPage
-def show_start_page():
-    screen.fill("black")
-    title_text = font.render("Eat Ball Game", True, "white")
-    start_text = font.render("Press any key to start", True, "green")
-    
-    screen.blit(title_text, (screen_width // 2 - title_text.get_width() // 2, screen_height // 3))
-    screen.blit(start_text, (screen_width // 2 - start_text.get_width() // 2, screen_height // 2))
-    
-    pygame.display.flip()
-    
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.KEYDOWN:
-                return
-
-#UI GameFail
-def show_fail_page():
-    screen.fill("black")
-    fail_text = font.render("You Lose! Try Again?", True, "red")
-    replay_text = font.render("Press R to Restart or Q to Quit", True, "yellow")
-    
-    screen.blit(fail_text, (screen_width // 2 - fail_text.get_width() // 2, screen_height // 3))
-    screen.blit(replay_text, (screen_width // 2 - replay_text.get_width() // 2, screen_height // 2))
-    
-    pygame.display.flip()
-    
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:
-                    return "replay"
-                elif event.key == pygame.K_q:
-                    pygame.quit()
-                    sys.exit()
-#UI GameSucces
-def show_success_page():
-    screen.fill("black")
-    success_text = font.render("Congratulations! You Win!", True, "green")
-    replay_text = font.render("Press R to Replay or Q to Quit", True, "yellow")
-    
-    screen.blit(success_text, (screen_width // 2 - success_text.get_width() // 2, screen_height // 3))
-    screen.blit(replay_text, (screen_width // 2 - replay_text.get_width() // 2, screen_height // 2))
-    
-    pygame.display.flip()
-    
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:
-                    return "replay"
-                elif event.key == pygame.K_q:
-                    pygame.quit()
-                    sys.exit()
 
 def main():
     ai_balls = []
     enemy_balls = []
     skill_balls = []
 
-    show_start_page()  # Show the start page at the beginning
+    replay_img = pygame.image.load("Replay_Button.png")
+    exit_img = pygame.image.load("Exit_Button.png")
+    game_end = False
     
     player_ball = create_player_ball()
-    game_end = False
 
     while True:
         for event in pygame.event.get():
@@ -385,7 +323,7 @@ def main():
             if event.type == REFRESH_BALL_EVENT:
                 refresh_enemy_ball(enemy_balls)
 
-        if not game_end:
+        if game_end == False:
             creat_ai_balls(ai_balls)
             create_enemy_ball(enemy_balls)
             draw_screen(player_ball, ai_balls, enemy_balls, skill_balls, screen)
@@ -399,20 +337,29 @@ def main():
                 ai_ball_eat(ai_ball, player_ball, ai_balls, enemy_balls, skill_balls)
                 if ai_ball.speedup or ai_ball.invincible:
                     ai_ball.end_skill()
-            game_end, game_ending = check_game_end(player_ball, ai_balls)
+            game_end, game_endding = check_game_end(player_ball, ai_balls)
 
         if game_end:
-            if game_ending:
-                action = show_success_page()
+            if game_endding:
+                gameover_text = font.render('Congratulations! You have eat all balls!', True, "red")
+                screen.blit(gameover_text, (0, 160))
+                screen.blit(replay_img, (440, 310))
+                screen.blit(exit_img, (440, 460))
             else:
-                action = show_fail_page()
-            if action == "replay":
-                main()
-            elif action is None:
-                return
+                gameover_text = font.render('Sorry! You were eaten by other ball!', True, "blue")
+                screen.blit(gameover_text, (0, 160))
+                screen.blit(replay_img, (440, 310))
+                screen.blit(exit_img, (440, 460))
+            mouse_down = pygame.mouse.get_pressed()
+            if mouse_down[0]:
+                pos = pygame.mouse.get_pos()
+                if 440 < pos[0] < 918 and 310 < pos[1] < 410:
+                    main()
+                elif 440 < pos[0] < 918 and 460 < pos[1] < 560:
+                    pygame.quit()
+                    sys.exit()
 
         pygame.display.flip()
-
     
 if __name__ == "__main__":
     main()
