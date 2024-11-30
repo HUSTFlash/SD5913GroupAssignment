@@ -16,29 +16,29 @@ skill_ball_num = 3
 skill_ball_size = 10
 skill_refresh_min = 1
 
+max_speed = 1
 speedup_mag = 1.5
-flash_distance = 10
+flash_distance = 100
 speedup_duration = 10000
 invincible_duration = 10000
 
-playing_bg = pygame.image.load("D:/GitHub/SD5913GroupAssignment/Art/UI/Background.png")
-#start_img = pygame.image.load("D:/GitHub/SD5913GroupAssignment/Art/UI/Start.png")
-#success_img = pygame.image.load("D:/GitHub/SD5913GroupAssignment/Art/UI/Win.png")
-#failure_img = pygame.image.load("D:/GitHub/SD5913GroupAssignment/Art/UI/Fail.png")
+playing_bg = pygame.image.load("./Art/UI/Background.png")
+start_img = pygame.image.load("./Art/UI/Start.png")
+success_img = pygame.image.load("./Art/UI/Win.png")
+failure_img = pygame.image.load("./Art/UI/Fail.png")
 
-#start_button_rect = pygame.Rect(490, 420, 300, 88)
-#replay_button_rect = pygame.Rect(450, 400, 330, 75)  
-#exit_button_rect = pygame.Rect(500, 490, 280, 75)
+start_button_rect = pygame.Rect(490, 420, 300, 88)
+replay_button_rect = pygame.Rect(450, 400, 330, 75)  
+exit_button_rect = pygame.Rect(500, 490, 280, 75)
 
 pygame.init()
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Eat Ball Game")
 clock = pygame.time.Clock()
-max_speed = 0.5
 font = pygame.font.Font(None, 96)
 
 ADD_SKILLBALL_EVENT = pygame.USEREVENT + 1
-pygame.time.set_timer(ADD_SKILLBALL_EVENT, skill_refresh_min * 60 * 1000)
+pygame.time.set_timer(ADD_SKILLBALL_EVENT, skill_refresh_min * 30 * 1000)
 
 REFRESH_BALL_EVENT = pygame.USEREVENT + 2
 pygame.time.set_timer(REFRESH_BALL_EVENT, enemy_refresh_min * 60 * 1000)
@@ -56,12 +56,14 @@ class Ball(object):
         self.speedup = False
         self.invincible = False
         self.skill_start_time = None
+        self.user_input = [0,0]
 
     def eat(self, target_ball):
         if self != target_ball and self.status and target_ball.status and target_ball.invincible == False:
             if math.sqrt((self.x - target_ball.x)**2 + (self.y - target_ball.y)**2) <= self.size:
                 target_ball.status = False
                 self.size += target_ball.size
+                self.score += target_ball.size
     
     def get_skill(self, target_skill):
         if self.status and target_skill.status and self.skill_id == 0:
@@ -76,7 +78,19 @@ class Ball(object):
                 self.speedup = True
                 self.skill_start_time = pygame.time.get_ticks()
             case 2:
-                self.skill_id = 0
+                if self.user_input != [0,0]:
+                    self.skill_id = 0
+                    self.x += self.user_input[0] * flash_distance
+                    self.y += self.user_input[1] * flash_distance
+                    if self.y <= 0:
+                        self.y = 0
+                    if self.y >= screen_height:
+                        self.y = screen_height
+                    if self.x <= 0:
+                        self.x = 0
+                    if self.x >= screen_width:
+                        self.x = screen_width
+                    
             case 3:
                 self.skill_id = 0
                 self.invincible = True
@@ -242,20 +256,25 @@ def create_skill_ball(skill_balls):
         skill_balls.append(skill_ball)
         
 def player_move(player_ball, speed):
+    player_ball.user_input = [0,0]
     key = pygame.key.get_pressed()
     if key[pygame.K_UP]:
+        player_ball.user_input[1] = -1
         if player_ball.y <= 0:
             player_ball.y = 0
         player_ball.y -= speed
     if key[pygame.K_DOWN]:
+        player_ball.user_input[1] = 1
         if player_ball.y >= screen_height:
             player_ball.y = screen_height
         player_ball.y += speed
     if key[pygame.K_LEFT]:
+        player_ball.user_input[0] = -1
         if player_ball.x <= 0:
             player_ball.x = 0
         player_ball.x -= speed
     if key[pygame.K_RIGHT]:
+        player_ball.user_input[0] = 1
         if player_ball.x >= screen_width:
             player_ball.x = screen_width
         player_ball.x += speed
@@ -280,7 +299,7 @@ def ai_ball_eat(ai_ball, player_ball, ai_balls, balls, skill_balls):
         
 def player_use_skill(player_ball):
     key = pygame.key.get_pressed()
-    if key[pygame.K_SPACE]:
+    if key[pygame.K_LSHIFT]:
         if player_ball.skill_id != 0 and player_ball.speedup == False and player_ball.invincible == False:
             player_ball.use_skill()
 
@@ -322,15 +341,11 @@ def main():
     enemy_balls = []
     skill_balls = []
 
-
-    success_img = pygame.image.load("D:/GitHub/SD5913GroupAssignment/Art/UI/Win.png")
-    failure_img = pygame.image.load("D:/GitHub/SD5913GroupAssignment/Art/UI/Fail.png")
     game_end = False
     
     player_ball = create_player_ball()
 
     def start_page():
-        start_img = pygame.image.load("D:/GitHub/SD5913GroupAssignment/Art/UI/Start.png")  # Load your start page image
         start_button_rect = pygame.Rect(490, 420, 300, 88)  # Define the area for the start button
         
         while True:
