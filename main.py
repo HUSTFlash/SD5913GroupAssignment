@@ -23,10 +23,19 @@ flash_distance = 100
 speedup_duration = 10000
 invincible_duration = 10000
 
+player_img_1 = pygame.image.load("./Art/Player/player_1.png")
+player_img_2 = pygame.image.load("./Art/Player/player_2.png")
+player_img_3 = pygame.image.load("./Art/Player/player_3.png")
+aiplayer_img = pygame.image.load("./Art/Player/Enemy.png")
 playing_bg = pygame.image.load("./Art/UI/Background.png")
 start_img = pygame.image.load("./Art/UI/Start.png")
 success_img = pygame.image.load("./Art/UI/Win.png")
 failure_img = pygame.image.load("./Art/UI/Fail.png")
+apple = pygame.image.load("./Art/Ball/Apple.png")
+blueberry = pygame.image.load("./Art/Ball/Blueberry.png")
+kiwi = pygame.image.load("./Art/Ball/Kiwi.png")
+orange = pygame.image.load("./Art/Ball/Orange.png")
+watermalon = pygame.image.load("./Art/Ball/Watermalon.png")
 
 start_button_rect = pygame.Rect(490, 420, 300, 88)
 replay_button_rect = pygame.Rect(450, 400, 330, 75)  
@@ -119,16 +128,36 @@ class Ball(object):
 class PlayerBall(Ball):
     def __init__(self, x, y, size):
         super().__init__(x, y, size)
+        self.img_type = random.randint(1,3)
 
     def draw(self, screen):
-        pygame.draw.circle(screen, "white", (self.x, self.y), self.size)
+        #pygame.draw.circle(screen, "white", (self.x, self.y), self.size)
+        match self.img_type:
+            case 1:
+                player_image = pygame.transform.scale(player_img_1, (2 * self.size, 2 * self.size))
+                player_rect = player_image.get_rect()
+                player_rect.center = (self.x, self.y)
+            case 2:
+                player_image = pygame.transform.scale(player_img_2, (2 * self.size, 2 * self.size))
+                player_rect = player_image.get_rect()
+                player_rect.center = (self.x, self.y)
+            case 3:
+                player_image = pygame.transform.scale(player_img_3, (2 * self.size, 2 * self.size))
+                player_rect = player_image.get_rect()
+                player_rect.center = (self.x, self.y)
+        screen.blit(player_image, player_rect)
+                
 
 class AIBall(Ball):
     def __init__(self, x, y, size):
         super().__init__(x, y, size)
 
     def draw(self, screen):
-        pygame.draw.circle(screen, "blue", (self.x, self.y), self.size)
+        #pygame.draw.circle(screen, "blue", (self.x, self.y), self.size)
+        ai_image = pygame.transform.scale(aiplayer_img, (2 * self.size, 2 * self.size))
+        ai_rect = ai_image.get_rect()
+        ai_rect.center = (self.x, self.y)
+        screen.blit(ai_image, ai_rect)
 
     def find_nearest_ball(self, player_ball, ai_balls, balls):
         distance_player = math.inf
@@ -191,9 +220,33 @@ class AIBall(Ball):
 class EnemyBall(Ball):
     def __init__(self, x, y, size):
         super().__init__(x, y, size)
+        self.fruit_class = random.randint(1,5)
 
     def draw(self, screen):
-        pygame.draw.circle(screen, "yellow", (self.x, self.y), self.size)
+        #pygame.draw.circle(screen, "yellow", (self.x, self.y), self.size)
+        match self.fruit_class:
+            case 1:
+                fruit_image = pygame.transform.scale(apple, (2 * self.size, 2 * self.size))
+                fruit_rect = fruit_image.get_rect()
+                fruit_rect.center = (self.x, self.y)
+            case 2:
+                fruit_image = pygame.transform.scale(blueberry, (2 * self.size, 2 * self.size))
+                fruit_rect = fruit_image.get_rect()
+                fruit_rect.center = (self.x, self.y)
+            case 3:
+                fruit_image = pygame.transform.scale(kiwi, (2 * self.size, 2 * self.size))
+                fruit_rect = fruit_image.get_rect()
+                fruit_rect.center = (self.x, self.y)
+            case 4:
+                fruit_image = pygame.transform.scale(orange, (2 * self.size, 2 * self.size))
+                fruit_rect = fruit_image.get_rect()
+                fruit_rect.center = (self.x, self.y)
+            case 5:
+                fruit_image = pygame.transform.scale(watermalon, (2 * self.size, 2 * self.size))
+                fruit_rect = fruit_image.get_rect()
+                fruit_rect.center = (self.x, self.y)
+        screen.blit(fruit_image, fruit_rect)
+                
 
 class SkillBall(Ball):
     def __init__(self, x, y, size):
