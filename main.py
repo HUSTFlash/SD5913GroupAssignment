@@ -23,10 +23,12 @@ flash_distance = 100
 speedup_duration = 10000
 invincible_duration = 10000
 
-player_img_1 = pygame.image.load("./Art/Player/player_1.png")
-player_img_2 = pygame.image.load("./Art/Player/player_2.png")
-player_img_3 = pygame.image.load("./Art/Player/player_3.png")
+player_img = pygame.image.load("./Art/Player/player_1.png")
+player_img_invincible = pygame.image.load("./Art/Player/player_2.png")
+player_img_speedup = pygame.image.load("./Art/Player/player_3.png")
 aiplayer_img = pygame.image.load("./Art/Player/Enemy.png")
+aiplayer_img_invincible = pygame.image.load("./Art/Skill/e_invicible.png")
+aiplayer_img_speedup = pygame.image.load("./Art/Skill/e_shift.png")
 playing_bg = pygame.image.load("./Art/UI/Background.png")
 start_img = pygame.image.load("./Art/UI/Start.png")
 success_img = pygame.image.load("./Art/UI/Win.png")
@@ -36,6 +38,9 @@ blueberry = pygame.image.load("./Art/Ball/Blueberry.png")
 kiwi = pygame.image.load("./Art/Ball/Kiwi.png")
 orange = pygame.image.load("./Art/Ball/Orange.png")
 watermalon = pygame.image.load("./Art/Ball/Watermalon.png")
+skill_speedup = pygame.image.load("./Art/Skill/teleport.png")
+skill_flash = pygame.image.load("./Art/Skill/shift.png")
+skill_invincible = pygame.image.load("./Art/Skill/invicible.png")
 
 start_button_rect = pygame.Rect(490, 420, 300, 88)
 replay_button_rect = pygame.Rect(450, 400, 330, 75)  
@@ -128,23 +133,17 @@ class Ball(object):
 class PlayerBall(Ball):
     def __init__(self, x, y, size):
         super().__init__(x, y, size)
-        self.img_type = random.randint(1,3)
 
     def draw(self, screen):
         #pygame.draw.circle(screen, "white", (self.x, self.y), self.size)
-        match self.img_type:
-            case 1:
-                player_image = pygame.transform.scale(player_img_1, (2 * self.size, 2 * self.size))
-                player_rect = player_image.get_rect()
-                player_rect.center = (self.x, self.y)
-            case 2:
-                player_image = pygame.transform.scale(player_img_2, (2 * self.size, 2 * self.size))
-                player_rect = player_image.get_rect()
-                player_rect.center = (self.x, self.y)
-            case 3:
-                player_image = pygame.transform.scale(player_img_3, (2 * self.size, 2 * self.size))
-                player_rect = player_image.get_rect()
-                player_rect.center = (self.x, self.y)
+        if self.speedup:
+            player_image = pygame.transform.scale(player_img_speedup, (2 * self.size, 2 * self.size))
+        elif self.invincible:
+            player_image = pygame.transform.scale(player_img_invincible, (2 * self.size, 2 * self.size))
+        else:
+            player_image = pygame.transform.scale(player_img, (2 * self.size, 2 * self.size))
+        player_rect = player_image.get_rect()
+        player_rect.center = (self.x, self.y)
         screen.blit(player_image, player_rect)
                 
 
@@ -154,7 +153,12 @@ class AIBall(Ball):
 
     def draw(self, screen):
         #pygame.draw.circle(screen, "blue", (self.x, self.y), self.size)
-        ai_image = pygame.transform.scale(aiplayer_img, (2 * self.size, 2 * self.size))
+        if self.speedup:
+            ai_image = pygame.transform.scale(aiplayer_img_speedup, (2 * self.size, 2 * self.size))
+        elif self.invincible:
+            ai_image = pygame.transform.scale(aiplayer_img_invincible, (2 * self.size, 2 * self.size))
+        else:
+            ai_image = pygame.transform.scale(aiplayer_img, (2 * self.size, 2 * self.size))
         ai_rect = ai_image.get_rect()
         ai_rect.center = (self.x, self.y)
         screen.blit(ai_image, ai_rect)
@@ -227,24 +231,16 @@ class EnemyBall(Ball):
         match self.fruit_class:
             case 1:
                 fruit_image = pygame.transform.scale(apple, (2 * self.size, 2 * self.size))
-                fruit_rect = fruit_image.get_rect()
-                fruit_rect.center = (self.x, self.y)
             case 2:
                 fruit_image = pygame.transform.scale(blueberry, (2 * self.size, 2 * self.size))
-                fruit_rect = fruit_image.get_rect()
-                fruit_rect.center = (self.x, self.y)
             case 3:
                 fruit_image = pygame.transform.scale(kiwi, (2 * self.size, 2 * self.size))
-                fruit_rect = fruit_image.get_rect()
-                fruit_rect.center = (self.x, self.y)
             case 4:
                 fruit_image = pygame.transform.scale(orange, (2 * self.size, 2 * self.size))
-                fruit_rect = fruit_image.get_rect()
-                fruit_rect.center = (self.x, self.y)
             case 5:
                 fruit_image = pygame.transform.scale(watermalon, (2 * self.size, 2 * self.size))
-                fruit_rect = fruit_image.get_rect()
-                fruit_rect.center = (self.x, self.y)
+        fruit_rect = fruit_image.get_rect()
+        fruit_rect.center = (self.x, self.y)
         screen.blit(fruit_image, fruit_rect)
                 
 
@@ -263,11 +259,15 @@ class SkillBall(Ball):
     def draw(self, screen):
         match self.skill_id:
             case 1:
-                pygame.draw.circle(screen, "red", (self.x, self.y), self.size)
+                #pygame.draw.circle(screen, "red", (self.x, self.y), self.size)
+                skill_img = pygame.transform.scale(skill_speedup, (2 * self.size, 2 * self.size))
             case 2:
-                pygame.draw.circle(screen, "green", (self.x, self.y), self.size)
+                skill_img = pygame.transform.scale(skill_flash, (2 * self.size, 2 * self.size))
             case 3:
-                pygame.draw.circle(screen, "orange", (self.x, self.y), self.size)
+                skill_img = pygame.transform.scale(skill_invincible, (2 * self.size, 2 * self.size))
+        skill_rect = skill_img.get_rect()
+        skill_rect.center = (self.x, self.y)
+        screen.blit(skill_img, skill_rect)
 
 def create_player_ball():
     initial_position_x = screen_width / 2
@@ -357,17 +357,17 @@ def player_use_skill(player_ball):
 
 def draw_screen(player_ball, ai_balls, balls, skill_balls, screen, background_img):
     screen.blit(background_img, (0, 0))
-    if player_ball.status:
-        player_ball.draw(screen)
-    for ai_ball in ai_balls:
-        if ai_ball.status:
-            ai_ball.draw(screen)
     for ball in balls:
         if ball.status:
             ball.draw(screen)
     for skill_ball in skill_balls:
         if skill_ball.status:
             skill_ball.draw(screen)
+    for ai_ball in ai_balls:
+        if ai_ball.status:
+            ai_ball.draw(screen)
+    if player_ball.status:
+        player_ball.draw(screen)
 
 def check_game_end(player_ball, ai_balls):
     gameover = True
