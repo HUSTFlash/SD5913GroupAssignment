@@ -6,14 +6,15 @@ import sys
 import pygame.image
 
 ai_num = 3
+player_initial_size = 20
 enemy_num = 20
-enemy_size_min = 5
-enemy_size_max = 10
+enemy_size_min = 12
+enemy_size_max = 20
 enemy_refresh_min = 1
 screen_width = 1280
 screen_height = 720
 skill_ball_num = 3
-skill_ball_size = 10
+skill_ball_size = 18
 skill_refresh_min = 1
 
 max_speed = 1
@@ -218,7 +219,6 @@ class SkillBall(Ball):
 def create_player_ball():
     initial_position_x = screen_width / 2
     initial_position_y = screen_height / 2
-    player_initial_size = 12
     player_ball = PlayerBall(initial_position_x, initial_position_y, player_initial_size)
     return player_ball
 
@@ -226,8 +226,7 @@ def creat_ai_balls(ai_balls):
     while len(ai_balls) < ai_num:
         ai_position_x = random.randint(0, screen_width)
         ai_position_y = random.randint(0, screen_height)
-        ai_size = 12
-        ai_ball = AIBall(ai_position_x, ai_position_y, ai_size)
+        ai_ball = AIBall(ai_position_x, ai_position_y, player_initial_size)
         ai_balls.append(ai_ball)
 
 def create_enemy_ball(balls):
