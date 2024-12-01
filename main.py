@@ -23,6 +23,8 @@ flash_distance = 100
 speedup_duration = 10000
 invincible_duration = 10000
 
+birth_point = [[screen_width/4, screen_height/4], [screen_width*3/4, screen_height/4], [screen_width/4, screen_height*3/4], [screen_width*3/4, screen_height*3/4]]
+
 player_img = pygame.image.load("./Art/Player/player_1.png")
 player_img_invincible = pygame.image.load("./Art/Player/player_2.png")
 player_img_speedup = pygame.image.load("./Art/Player/player_3.png")
@@ -309,15 +311,19 @@ class SkillBall(Ball):
         screen.blit(skill_img, skill_rect)
 
 def create_player_ball():
-    initial_position_x = screen_width / 2
-    initial_position_y = screen_height / 2
+    player_birth_point = random.choice(birth_point)
+    initial_position_x = player_birth_point[0]
+    initial_position_y = player_birth_point[1]
+    birth_point.remove(player_birth_point)
     player_ball = PlayerBall(initial_position_x, initial_position_y, player_initial_size)
     return player_ball
 
 def creat_ai_balls(ai_balls):
     while len(ai_balls) < ai_num:
-        ai_position_x = random.randint(0, screen_width)
-        ai_position_y = random.randint(0, screen_height)
+        ai_position = random.choice(birth_point)
+        ai_position_x = ai_position[0]
+        ai_position_y = ai_position[1]
+        birth_point.remove(ai_position)
         ai_ball = AIBall(ai_position_x, ai_position_y, player_initial_size)
         ai_balls.append(ai_ball)
 
