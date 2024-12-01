@@ -38,8 +38,8 @@ blueberry = pygame.image.load("./Art/Ball/Blueberry.png")
 kiwi = pygame.image.load("./Art/Ball/Kiwi.png")
 orange = pygame.image.load("./Art/Ball/Orange.png")
 watermalon = pygame.image.load("./Art/Ball/Watermalon.png")
-skill_speedup = pygame.image.load("./Art/Skill/teleport.png")
-skill_flash = pygame.image.load("./Art/Skill/shift.png")
+skill_speedup = pygame.image.load("./Art/Skill/shift.png")
+skill_flash = pygame.image.load("./Art/Skill/teleport.png")
 skill_invincible = pygame.image.load("./Art/Skill/invicible.png")
 
 start_button_rect = pygame.Rect(490, 420, 300, 88)
@@ -104,8 +104,7 @@ class Ball(object):
                     if self.x <= 0:
                         self.x = 0
                     if self.x >= screen_width:
-                        self.x = screen_width
-                    
+                        self.x = screen_width     
             case 3:
                 self.skill_id = 0
                 self.invincible = True
@@ -162,6 +161,42 @@ class AIBall(Ball):
         ai_rect = ai_image.get_rect()
         ai_rect.center = (self.x, self.y)
         screen.blit(ai_image, ai_rect)
+        
+    def use_skill(self, dx, dy, distance):
+        match self.skill_id:
+            case 1:
+                self.skill_id = 0
+                self.speedup = True
+                self.skill_start_time = pygame.time.get_ticks()
+            case 2:
+                self.skill_id = 0
+                self.x += flash_distance * (dx / distance)
+                self.y += flash_distance * (dy / distance)
+                if self.x <= 0:
+                    self.x = 0
+                if self.x >= screen_width:
+                    self.x = screen_width
+            
+                if self.y <= 0:
+                    self.y = 0
+                if self.y >= screen_height:
+                    self.y = screen_height  
+            case 3:
+                self.skill_id = 0
+                self.invincible = True
+                self.skill_start_time = pygame.time.get_ticks()
+                
+    def end_skill(self):
+        if self.skill_start_time is None:
+            return  # If no skill has been activated, skip the skill end check
+    
+        current_time = pygame.time.get_ticks()
+        if self.speedup:
+            if current_time - self.skill_start_time > speedup_duration:
+                self.speedup = False
+        else:
+            if current_time - self.skill_start_time > invincible_duration:
+                self.invincible = False
 
     def find_nearest_ball(self, player_ball, ai_balls, balls):
         distance_player = math.inf
@@ -201,6 +236,10 @@ class AIBall(Ball):
             dx = target_ball.x - self.x
             dy = target_ball.y - self.y
             distance = math.sqrt(dx**2 + dy**2)
+            if self.skill_id != 0 and self.speedup == False and self.invincible == False:
+                self.use_skill(dx, dy, distance)
+            if self.speedup or self.invincible:
+                self.end_skill()
             speed = self.get_speed()
             if self.x <= 0:
                 self.x = 0
