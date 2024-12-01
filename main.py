@@ -52,7 +52,7 @@ pygame.init()
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Eat Ball Game")
 clock = pygame.time.Clock()
-font = pygame.font.Font(None, 96)
+font = pygame.font.Font(None, 24)
 
 ADD_SKILLBALL_EVENT = pygame.USEREVENT + 1
 pygame.time.set_timer(ADD_SKILLBALL_EVENT, skill_refresh_min * 30 * 1000)
@@ -76,7 +76,7 @@ class Ball(object):
         self.user_input = [0,0]
 
     def eat(self, target_ball):
-        if self != target_ball and self.status and target_ball.status and target_ball.invincible == False:
+        if self != target_ball and self.status and target_ball.status and target_ball.invincible == False and self.size >= target_ball.size:
             if math.sqrt((self.x - target_ball.x)**2 + (self.y - target_ball.y)**2) <= self.size:
                 target_ball.status = False
                 self.size += target_ball.size
@@ -126,9 +126,9 @@ class Ball(object):
     
     def get_speed(self):
         if self.speedup:
-            return max_speed * speedup_mag / (self.size / 12)
+            return max_speed * speedup_mag / (self.size / 20)
         else:
-            return max_speed / (self.size / 12)
+            return max_speed / (self.size / 20)
     
         
 class PlayerBall(Ball):
@@ -400,6 +400,25 @@ def player_use_skill(player_ball):
         if player_ball.skill_id != 0 and player_ball.speedup == False and player_ball.invincible == False:
             player_ball.use_skill()
 
+def draw_user_info(player_ball):
+    skill_text = font.render("Current Skill:", True, (0, 0, 0))
+    match player_ball.skill_id:
+        case 0:
+            skill_img = None
+        case 1:
+            skill_img = pygame.transform.scale(skill_speedup, (24, 24))
+        case 2:
+            skill_img = pygame.transform.scale(skill_flash, (24, 24))
+        case 3:
+            skill_img = pygame.transform.scale(skill_invincible, (24, 24))
+    screen.blit(skill_text, (10, 10))
+    if skill_img != None:
+        screen.blit(skill_img, (115, 5))
+
+    score_text = font.render(f"Score: {player_ball.score}", True, (0, 0, 0))
+    score_rect = score_text.get_rect(topright=(1270, 10))
+    screen.blit(score_text, score_rect)
+
 def draw_screen(player_ball, ai_balls, balls, skill_balls, screen, background_img):
     screen.blit(background_img, (0, 0))
     for ball in balls:
@@ -413,6 +432,7 @@ def draw_screen(player_ball, ai_balls, balls, skill_balls, screen, background_im
             ai_ball.draw(screen)
     if player_ball.status:
         player_ball.draw(screen)
+    draw_user_info(player_ball)
 
 def check_game_end(player_ball, ai_balls):
     gameover = True
@@ -431,7 +451,6 @@ def check_game_end(player_ball, ai_balls):
     gameover = player_gameover or ai_gameover
     
     return gameover, gameending
-
 
 def main():
     ai_balls = []
