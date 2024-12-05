@@ -23,8 +23,6 @@ flash_distance = 100
 speedup_duration = 10000
 invincible_duration = 10000
 
-birth_point = [[screen_width/4, screen_height/4], [screen_width*3/4, screen_height/4], [screen_width/4, screen_height*3/4], [screen_width*3/4, screen_height*3/4]]
-
 player_img = pygame.image.load("./Art/Player/player_1.png")
 player_img_invincible = pygame.image.load("./Art/Player/player_2.png")
 player_img_speedup = pygame.image.load("./Art/Player/player_3.png")
@@ -310,7 +308,7 @@ class SkillBall(Ball):
         skill_rect.center = (self.x, self.y)
         screen.blit(skill_img, skill_rect)
 
-def create_player_ball():
+def create_player_ball(birth_point):
     player_birth_point = random.choice(birth_point)
     initial_position_x = player_birth_point[0]
     initial_position_y = player_birth_point[1]
@@ -318,7 +316,7 @@ def create_player_ball():
     player_ball = PlayerBall(initial_position_x, initial_position_y, player_initial_size)
     return player_ball
 
-def creat_ai_balls(ai_balls):
+def creat_ai_balls(ai_balls, birth_point):
     while len(ai_balls) < ai_num:
         ai_position = random.choice(birth_point)
         ai_position_x = ai_position[0]
@@ -457,9 +455,9 @@ def main():
     enemy_balls = []
     skill_balls = []
 
+    birth_point = [[screen_width/4, screen_height/4], [screen_width*3/4, screen_height/4], [screen_width/4, screen_height*3/4], [screen_width*3/4, screen_height*3/4]]
     game_end = False
-    
-    player_ball = create_player_ball()
+    player_ball = create_player_ball(birth_point)
 
     def start_page():
         start_button_rect = pygame.Rect(490, 420, 300, 88)  # Define the area for the start button
@@ -493,7 +491,7 @@ def main():
                 refresh_enemy_ball(enemy_balls)
 
         if game_end == False:
-            creat_ai_balls(ai_balls)
+            creat_ai_balls(ai_balls, birth_point)
             create_enemy_ball(enemy_balls)
             draw_screen(player_ball, ai_balls, enemy_balls, skill_balls, screen, playing_bg)
             player_move(player_ball, player_ball.get_speed())
